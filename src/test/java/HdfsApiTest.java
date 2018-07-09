@@ -6,8 +6,8 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
 import org.junit.Test;
 
+import com.appleyk.exception.HdfsApiException;
 import com.appleyk.hdfs.HdfsApi;
-import com.appleyk.hdfs.HdfsApiException;
 import com.appleyk.model.RegexExcludePathFilter;
 
 public class HdfsApiTest {
@@ -199,7 +199,7 @@ public class HdfsApiTest {
 	@Test
 	public void existsFile() throws Exception{
 		initApi();
-		boolean result = api.existFile("2.txt");
+		boolean result = api.existFile("user/root");
 		System.out.println("是否存在："+result);
 	}
 	
@@ -211,7 +211,15 @@ public class HdfsApiTest {
 	public void getListStatus() throws Exception{
 		initApi();
 		PathFilter pathFilter = new RegexExcludePathFilter(".*txt");
-		api.getFileList("", pathFilter);
+		api.getFileList("user/root", pathFilter);
+		api.close();
+	}
+	
+	@Test
+	public void exists() throws Exception{
+		initApi();
+		boolean exists = api.exists("user/root");
+		System.out.println(exists);
 		api.close();
 	}
 }

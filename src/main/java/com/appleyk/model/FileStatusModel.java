@@ -10,6 +10,8 @@ public class FileStatusModel {
 	private boolean isDirectory;
 	// 文件或目录长度
 	private long len;
+	// 文件大小
+	private String size;
 	// 当前所属用户
 	private String owner;
 	// 当前所属用户组
@@ -64,6 +66,14 @@ public class FileStatusModel {
 
 	public void setLen(long len) {
 		this.len = len;
+	}
+
+	public String getSize() {
+		return size;
+	}
+
+	public void setSize(String size) {
+		this.size = size;
 	}
 
 	public String getOwner() {

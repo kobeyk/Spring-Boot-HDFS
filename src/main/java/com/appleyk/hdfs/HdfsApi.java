@@ -28,6 +28,7 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.appleyk.exception.HdfsApiException;
 import com.appleyk.model.FileStatusModel;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
@@ -44,13 +45,11 @@ public class HdfsApi {
 	private final Logger LOG = LoggerFactory.getLogger(HdfsApi.class);
 
 	/**
-	 * 如果不指定hdfs文件系统的uri，默认文件系统指向本地环境，比如当前环境是Windows 
-	 * 如果指定hdfs文件系统的uri ，也就是连接远程Hadoop文件系统，
+	 * 如果不指定hdfs文件系统的uri，默认文件系统指向本地环境，比如当前环境是Windows 如果指定hdfs文件系统的uri
+	 * ，也就是连接远程Hadoop文件系统，
 	 * 请确保uri和core-site.xml里面配置的fs.defaultFS的value值一样，否者获取远程文件系统失败
 	 */
 	private String uri;
-
-	
 
 	// Hadoop的用户和组信息。
 	private UserGroupInformation ugi;
@@ -65,10 +64,9 @@ public class HdfsApi {
 	// 否则加载远程HDFS文件系统上的配置文件，远程必须指定uri
 	private Configuration conf;
 
-
-	
 	/**
 	 * 根据文件系统的uri和Hadoop集群中的可用的用户构建Api
+	 * 
 	 * @param uri
 	 * @param user
 	 * @throws IOException
@@ -88,19 +86,20 @@ public class HdfsApi {
 			// 获得当前用户
 			this.ugi = UserGroupInformation.getCurrentUser();
 		}
-		
+
 		initializeFileSytem();
 	}
 
 	/**
 	 * 根据conf和user构建Api
+	 * 
 	 * @param conf
 	 * @param user
 	 * @throws IOException
 	 * @throws InterruptedException
 	 */
 	public HdfsApi(Configuration conf, String user) throws IOException, InterruptedException {
-		
+
 		if (null != conf) {
 			this.conf = conf;
 		} else {
@@ -121,6 +120,7 @@ public class HdfsApi {
 
 	/**
 	 * conf、fs、ugi均当做参数传进来构造Api
+	 * 
 	 * @param configuration
 	 * @param fs
 	 * @param ugi
@@ -130,19 +130,19 @@ public class HdfsApi {
 	 */
 	public HdfsApi(Configuration configuration, FileSystem fs, UserGroupInformation ugi)
 			throws IOException, InterruptedException, HdfsApiException {
-		
+
 		if (null != configuration) {
 			conf = configuration;
 		} else {
-			//加载本地配置
+			// 加载本地配置
 			conf = new Configuration();
 		}
 		UserGroupInformation.setConfiguration(conf);
-	
+
 		if (null != ugi) {
 			this.ugi = ugi;
 		} else {
-			//拿当前系统所用的user
+			// 拿当前系统所用的user
 			this.ugi = UserGroupInformation.getCurrentUser();
 		}
 
@@ -158,9 +158,9 @@ public class HdfsApi {
 		}
 	}
 
-	
 	/**
 	 * 抽象文件系统FileSystem对象实例化
+	 * 
 	 * @throws IOException
 	 * @throws InterruptedException
 	 */
@@ -173,17 +173,18 @@ public class HdfsApi {
 		});
 
 		// 如果未指定HDFS文件系统的uri，则默认为本地系统，替换file为本地C盘
-		if(StringUtils.isBlank(uri)){
+		if (StringUtils.isBlank(uri)) {
 			this.uri = conf.get("fs.default.name");
 			if (uri.equals("file:///")) {
 				this.uri = "C:";
 			}
 		}
-	
+
 	}
 
 	/**
 	 * 获取HDFS文件系统的状态（存储情况）
+	 * 
 	 * @return fs的状态
 	 * @throws Exception
 	 */
@@ -201,6 +202,7 @@ public class HdfsApi {
 
 	/**
 	 * 创建文件目录/文件
+	 * 
 	 * @param path
 	 * @throws InterruptedException
 	 * @throws IOException
@@ -234,23 +236,23 @@ public class HdfsApi {
 			}
 		});
 	}
-	
+
 	/**
 	 * 追加模式打开已存在的文件，并返回fs数据输出流，便于写入字节
+	 * 
 	 * @param path
 	 * @return
 	 * @throws IOException
 	 * @throws InterruptedException
 	 */
-	public FSDataOutputStream appendFile(final String path) throws IOException, InterruptedException{	
+	public FSDataOutputStream appendFile(final String path) throws IOException, InterruptedException {
 		return (FSDataOutputStream) execute(new PrivilegedExceptionAction<FSDataOutputStream>() {
 			public FSDataOutputStream run() throws Exception {
 				return fs.append(new Path(uri + "/" + path));
 			}
 		});
 	}
-		
-	
+
 	/**
 	 * 删除文件或者文件目录
 	 * 
@@ -262,14 +264,15 @@ public class HdfsApi {
 	 * @throws InterruptedException
 	 * @throws IOException
 	 */
-	public boolean rmdir(final String path, boolean recursive, boolean skiptrash) throws IOException, InterruptedException {
+	public boolean rmdir(final String path, boolean recursive, boolean skiptrash)
+			throws IOException, InterruptedException {
 		return execute(new PrivilegedExceptionAction<Boolean>() {
-			public Boolean run() {			
+			public Boolean run() {
 				try {
 					Path dPath;
 					String destPath = "";
 					if (StringUtils.isNotBlank(uri)) {
-						destPath = uri + "/" + path ;
+						destPath = uri + "/" + path;
 						dPath = new Path(destPath);
 					} else {
 						destPath = path;
@@ -280,8 +283,8 @@ public class HdfsApi {
 					if (!skiptrash) {
 						moveToTrash(destPath);
 						return true;
-					}else{
-					// 是否删除文件目录的时候，采用递归删除文件
+					} else {
+						// 是否删除文件目录的时候，采用递归删除文件
 						return fs.delete(dPath, recursive);
 					}
 				} catch (IllegalArgumentException e) {
@@ -355,6 +358,7 @@ public class HdfsApi {
 		fileStatu.setReplication(status.getReplication());
 		fileStatu.setDirectory(status.isDirectory());
 		fileStatu.setLen(status.getLen());
+		fileStatu.setSize(getByteToSize(status.getLen()));
 		fileStatu.setOwner(status.getOwner());
 		fileStatu.setGroup(status.getGroup());
 		fileStatu.setPermission(permissionToString(status.getPermission()));
@@ -461,7 +465,7 @@ public class HdfsApi {
 	 * @throws InterruptedException
 	 * @throws IOException
 	 */
-	public void downLoadFile(final String srcFile,final String destPath) throws IOException, InterruptedException {
+	public void downLoadFile(final String srcFile, final String destPath) throws IOException, InterruptedException {
 
 		execute(new PrivilegedExceptionAction<Void>() {
 			public Void run() {
@@ -536,9 +540,9 @@ public class HdfsApi {
 	 * @throws InterruptedException
 	 * @throws IOException
 	 */
-	public boolean rename(final String srcPath, final String dstPath) throws IOException, InterruptedException {
+	public boolean rename(final String srcPath, final String dstPath) throws Exception {
 		return execute(new PrivilegedExceptionAction<Boolean>() {
-			public Boolean run() {
+			public Boolean run() throws HdfsApiException {
 				boolean flag = false;
 				try {
 
@@ -553,7 +557,12 @@ public class HdfsApi {
 						dPath = new Path(dstPath);
 					}
 
-					flag = fs.rename(sPath, dPath);
+					if (sPath.getName().equals(dPath.getName())) {
+						flag = true;
+					} else {
+						flag = fs.rename(sPath, dPath);
+					}
+
 					System.out.println(srcPath + " rename to " + dstPath + ",成功");
 				} catch (IOException e) {
 					System.err.println(srcPath + " rename to " + dstPath + " error: " + e.getMessage());
@@ -566,10 +575,37 @@ public class HdfsApi {
 	}
 
 	/**
+	 * 判断路径Path是否存在
+	 * 
+	 * @param srcPath
+	 * @return
+	 * @throws IOException
+	 * @throws InterruptedException
+	 */
+	public boolean exists(final String srcPath) throws IOException, InterruptedException {
+		return execute(new PrivilegedExceptionAction<Boolean>() {
+
+			@Override
+			public Boolean run() throws Exception {
+
+				Path sPath;
+				if (StringUtils.isNotBlank(uri)) {
+					sPath = new Path(uri + "/" + srcPath);
+				} else {
+					sPath = new Path(srcPath);
+				}
+				return fs.exists(sPath);
+			}
+
+		});
+	}
+
+	/**
 	 * 判断目录是否存在
 	 * 
 	 * @param dirPath
-	 * @param create 当目录不存在的时候，是否创建目录，true：创建，false：不创建直接返回
+	 * @param create
+	 *            当目录不存在的时候，是否创建目录，true：创建，false：不创建直接返回
 	 * @return
 	 * @throws InterruptedException
 	 * @throws IOException
@@ -606,7 +642,8 @@ public class HdfsApi {
 	/**
 	 * 打开文件 FSDataInputStream继承DataInputStream，并实现了Seekable等接口
 	 * 
-	 * @param path  path
+	 * @param path
+	 *            path
 	 * @return input stream
 	 * @throws IOException
 	 * @throws InterruptedException
@@ -685,7 +722,7 @@ public class HdfsApi {
 				Path dPath;
 				String srcPath;
 				if (StringUtils.isNotBlank(uri)) {
-					srcPath =src;
+					srcPath = uri + "/" + src;
 					sPath = new Path(srcPath);
 					dPath = new Path(uri + "/" + dest);
 				} else {
@@ -693,11 +730,12 @@ public class HdfsApi {
 					sPath = new Path(srcPath);
 					dPath = new Path(dest);
 				}
-				if (!existFile(srcPath)) {
+				if (!existFile(src)) {
 					System.out.println(srcPath + " == 不存在，本次操作终止");
 					return false;
 				}
-				return FileUtil.copy(fs, sPath, fs, dPath, true, conf);
+				 boolean copy = FileUtil.copy(fs, sPath, fs, dPath, true, conf);
+				 return copy;
 			}
 		});
 
@@ -801,6 +839,7 @@ public class HdfsApi {
 
 	/**
 	 * 拿到Api里面的文件系统对象
+	 * 
 	 * @return
 	 */
 	public FileSystem getFs() {
@@ -809,6 +848,7 @@ public class HdfsApi {
 
 	/**
 	 * 外部设置fs
+	 * 
 	 * @param fs
 	 */
 	public void setFs(FileSystem fs) {
@@ -850,19 +890,22 @@ public class HdfsApi {
 				 */
 
 				Trash trash = new Trash(fs, conf);
-				return trash.moveToTrash(new Path(path));
+				boolean flag = trash.moveToTrash(new Path(path));
+				return  flag;
 			}
 		});
 	}
 
 	/**
 	 * 从回收站恢复指定文件或目录到指定位置
+	 * 
 	 * @param path
 	 * @return
-	 * @throws InterruptedException 
-	 * @throws IOException 
+	 * @throws InterruptedException
+	 * @throws IOException
 	 */
-	public boolean restoreFromTrash(final String srcPath,final String destPath) throws IOException, InterruptedException{
+	public boolean restoreFromTrash(final String srcPath, final String destPath)
+			throws IOException, InterruptedException {
 		return execute(new PrivilegedExceptionAction<Boolean>() {
 			@Override
 			public Boolean run() throws Exception {
@@ -872,11 +915,11 @@ public class HdfsApi {
 				move(srcPath, destPath);
 				return true;
 			}
-			
+
 		});
-			
+
 	}
-	
+
 	/**
 	 * 清空回收站
 	 * 
@@ -886,11 +929,11 @@ public class HdfsApi {
 	public boolean emptyTrash() throws Exception {
 		return execute(new PrivilegedExceptionAction<Boolean>() {
 			public Boolean run() throws Exception {
-				
-				//第一种方法：使用递归删除目录，暴力清空
-				//rmdir(getTrashDirPath(), true, true);
-				
-				//第二种方法：使用expunge方法，删除掉旧的检查点
+
+				// 第一种方法：使用递归删除目录，暴力清空
+				// rmdir(getTrashDirPath(), true, true);
+
+				// 第二种方法：使用expunge方法，删除掉旧的检查点
 				Trash tr = new Trash(fs, conf);
 				tr.expunge();
 				return true;
@@ -923,14 +966,15 @@ public class HdfsApi {
 			throw new HdfsApiException("HDFS021 Could not write file " + filePath, e);
 		}
 	}
-	
+
 	/**
 	 * 往文件里面写（String）内容 == 如果文件存在，内容追加到文件的末尾
+	 * 
 	 * @param filePath
 	 * @param content
 	 * @throws HdfsApiException
 	 */
-	public void appendStringToFile(final String filePath, final String content) throws HdfsApiException{
+	public void appendStringToFile(final String filePath, final String content) throws HdfsApiException {
 		try {
 			execute(new PrivilegedExceptionAction<Void>() {
 				public Void run() throws IOException, InterruptedException {
@@ -972,8 +1016,10 @@ public class HdfsApi {
 	/**
 	 * 在HDFS上，使用ugi的doAs执行action，记录异常
 	 *
-	 * @param action  策略对象
-	 * @param <T> run方法里面返回值的类型
+	 * @param action
+	 *            策略对象
+	 * @param <T>
+	 *            run方法里面返回值的类型
 	 * @return 出现异常情况。每个实现 PrivilegedExceptionAction 的类都应该记录其 run 方法能够抛出的异常。
 	 * @throws IOException
 	 * @throws InterruptedException
@@ -983,10 +1029,12 @@ public class HdfsApi {
 	}
 
 	/**
-	 * 在HDFS上，使用ugi的doAs执行action，记录异常
-	 * 方法重载，第二个参数alwaysRetry不设置，默认重试三次异常后，跳出循环
-	 * @param action 策略对象
-	 * @param <T> result type
+	 * 在HDFS上，使用ugi的doAs执行action，记录异常 方法重载，第二个参数alwaysRetry不设置，默认重试三次异常后，跳出循环
+	 * 
+	 * @param action
+	 *            策略对象
+	 * @param <T>
+	 *            result type
 	 * @return result of operation
 	 * @throws IOException
 	 * @throws InterruptedException
@@ -995,7 +1043,7 @@ public class HdfsApi {
 			throws IOException, InterruptedException {
 
 		T result = null;
-		
+
 		/**
 		 * 由于HDFS-1058，这里采用了重试策略。HDFS可以随机抛出异常 IOException关于从DN中检索块(如果并发读写)
 		 * 在特定文件上执行(参见HDFS-1058的详细信息)。
@@ -1005,7 +1053,7 @@ public class HdfsApi {
 		do {
 			tryNumber += 1;
 			try {
-				//doAs中执行的操作都是以proxyUser用户的身份执行
+				// doAs中执行的操作都是以proxyUser用户的身份执行
 				result = ugi.doAs(action);
 				succeeded = true;
 			} catch (IOException ex) {

@@ -9,7 +9,6 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 import com.appleyk.hdfs.mapper.WordCountMapper;
-import com.appleyk.hdfs.part.PartitionTest;
 import com.appleyk.hdfs.reducer.WordCountReducer;
 
 /**
@@ -24,7 +23,7 @@ public class WordCountApp {
 		
 		Configuration conf = new Configuration();
 		//配置uri
-		conf.set("fs.defaultFS", "hdfs://192.168.142.138:9000");
+		conf.set("fs.defaultFS", "hdfs://192.168.142.144:9000");
 	
 		//创建一个作业，作用在Hadoop集群上（remote）
 		Job job = Job.getInstance(conf, "wordCount");
@@ -58,9 +57,9 @@ public class WordCountApp {
 		job.setOutputValueClass(IntWritable.class);
 
 		//设置输入的Path列表（可以是单个文件也可以是多个文件（目录表示即可））
-		FileInputFormat.setInputPaths (job, new Path("hdfs://192.168.142.138:9000/input" ));
+		FileInputFormat.setInputPaths (job, new Path("hdfs://192.168.142.144:9000/input" ));
 		//设置输出的目录Path（确认输出Path不存在，如存在，请先进行目录删除）
-		FileOutputFormat.setOutputPath(job, new Path("hdfs://192.168.142.138:9000/output"));
+		FileOutputFormat.setOutputPath(job, new Path("hdfs://192.168.142.144:9000/output"));
 
 		//将作业提交到集群并等待它完成。
 		boolean bb =job.waitForCompletion(true);

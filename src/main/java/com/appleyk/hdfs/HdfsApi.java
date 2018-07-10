@@ -1,15 +1,20 @@
 package com.appleyk.hdfs;
 
-import java.io.FileOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.security.PrivilegedExceptionAction;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import javax.activation.MimetypesFileTypeMap;
+import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -479,6 +484,7 @@ public class HdfsApi {
 					// 否者 默认上传到根目录下
 					dPath = new Path(uri + "/");
 				}
+			
 				OutputStream os = fs.create(dPath);	     
 				/**
 				 * in ：输入字节流（从要上传的文件中读取）
@@ -536,10 +542,10 @@ public class HdfsApi {
 	 * @throws InterruptedException
 	 * @throws IOException
 	 */
-	public void downLoadFile(final String srcFile, final String destPath,boolean flag) throws IOException, InterruptedException {
+	public void downLoadFile(final String srcFile, HttpServletResponse response,boolean flag) throws IOException, InterruptedException {
 
 		execute(new PrivilegedExceptionAction<Void>() {
-			public Void run() {
+			public Void run() throws UnsupportedEncodingException {
 				// 源路径
 				Path sPath;
 				if (StringUtils.isNotBlank(uri)) {
@@ -548,11 +554,25 @@ public class HdfsApi {
 					sPath = new Path(srcFile);
 				}
 
+				
+				String fileName = srcFile.substring(srcFile.lastIndexOf("/") + 1);
+				System.err.println(fileName);
+				response.setContentType(new MimetypesFileTypeMap().getContentType(new File(fileName)));			
+				response.setHeader("Content-Disposition",
+						"attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
+			
 				try {
 					 InputStream is = fs.open(sPath);
-					 FileOutputStream fos = new FileOutputStream(destPath);            
-					 org.apache.hadoop.io.IOUtils.copyBytes(is, fos, 2048);
-					System.out.println("文件下载至：" + destPath);
+					 byte[] data = new byte[1024];
+					 OutputStream out = response.getOutputStream();
+				
+					 while(is.read(data)!=-1){
+						 out.write(data);
+					 }
+					 out.flush();
+					 is.close();
+					 out.close();
+			
 				} catch (IOException e) {
 					System.err.println(e);
 				}
@@ -561,6 +581,7 @@ public class HdfsApi {
 		});
 	}
 	
+
 
 	/**
 	 * 查找某个文件在 HDFS集群的位置【文件块的信息】

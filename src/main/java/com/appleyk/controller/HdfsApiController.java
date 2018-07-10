@@ -86,7 +86,6 @@ public class HdfsApiController {
 	}
 
 	
-	
 	/**
 	 * 上传文件
 	 * 
@@ -113,13 +112,12 @@ public class HdfsApiController {
 	 */
 	@GetMapping("/download")
 	public ResponseResult downLoadFile(@RequestParam(name = "srcPath") String srcPath,
-			@RequestParam(name = "destPath") String destPath) throws Exception {
+			HttpServletResponse response) throws Exception {
 		HdfsApi api = new HdfsApi(conf, user);
-		api.downLoadFile(srcPath, destPath, true);
+		api.downLoadFile(srcPath, response, true);
 		api.close();
 		return new ResponseResult(ResponseMessage.OK);
 	}
-
 	
 	
 	@GetMapping

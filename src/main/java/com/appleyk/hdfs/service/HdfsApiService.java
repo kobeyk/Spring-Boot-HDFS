@@ -1,11 +1,9 @@
 package com.appleyk.hdfs.service;
 
-import java.util.List;
-
 import javax.servlet.http.HttpServletResponse;
 
 import com.appleyk.hdfs.HdfsApi;
-import com.appleyk.model.FileStatusModel;
+import com.appleyk.model.HDFSFileStatus;
 import com.appleyk.model.HDFSOp;
 import com.appleyk.model.ListFilter;
 import com.appleyk.paging.DPage;
@@ -23,8 +21,6 @@ public interface HdfsApiService {
 	OPEN("打开文件",7),
 	WRITE("写入内容",8),
 	APPEND("追加内容",9),
-	UPLOAD("上传文件或目录",10),
-	DOWNLOAD("下载文件或目录",11);
 	 */
 	
 	/**
@@ -134,7 +130,7 @@ public interface HdfsApiService {
 	 * @return
 	 * @throws Exception
 	 */
-	DPage<FileStatusModel> getFileListStatus(HdfsApi api , ListFilter filter)  throws Exception;
+	DPage<HDFSFileStatus> getFileListStatus(HdfsApi api , ListFilter filter)  throws Exception;
 	
 	/**
 	 * 获得主用户目录下的文件列表状态
@@ -143,7 +139,7 @@ public interface HdfsApiService {
 	 * @return
 	 * @throws Exception
 	 */
-	DPage<FileStatusModel> getHomeListStatus(HdfsApi api , ListFilter filter)  throws Exception;
+	DPage<HDFSFileStatus> getHomeListStatus(HdfsApi api , ListFilter filter)  throws Exception;
 	
 	/**
 	 * 获得垃圾回收站目录下面的文件列表状态
@@ -152,6 +148,6 @@ public interface HdfsApiService {
 	 * @return
 	 * @throws Exception
 	 */
-	DPage<FileStatusModel> getTrashListStatus(HdfsApi api , ListFilter filter) throws Exception;
+	DPage<HDFSFileStatus> getTrashListStatus(HdfsApi api , ListFilter filter) throws Exception;
 	
 }

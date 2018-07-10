@@ -1,6 +1,9 @@
 package com.appleyk.hdfs;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 import java.security.PrivilegedExceptionAction;
 import java.text.DecimalFormat;
@@ -29,7 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.appleyk.exception.HdfsApiException;
-import com.appleyk.model.FileStatusModel;
+import com.appleyk.model.HDFSFileStatus;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
 
@@ -308,12 +311,12 @@ public class HdfsApi {
 	 * @throws InterruptedException
 	 * @throws IOException
 	 */
-	public List<FileStatusModel> getFileList(final String path, PathFilter pathFilter)
+	public List<HDFSFileStatus> getFileList(final String path, PathFilter pathFilter)
 			throws IOException, InterruptedException {
-		return execute(new PrivilegedExceptionAction<List<FileStatusModel>>() {
-			public List<FileStatusModel> run() {
+		return execute(new PrivilegedExceptionAction<List<HDFSFileStatus>>() {
+			public List<HDFSFileStatus> run() {
 				ObjectMapper mapper = new ObjectMapper();
-				List<FileStatusModel> models = new ArrayList<>();
+				List<HDFSFileStatus> models = new ArrayList<>();
 				try {
 					Path dPath;
 					if (StringUtils.isNotBlank(uri)) {
@@ -351,9 +354,9 @@ public class HdfsApi {
 	 * @param status
 	 * @return
 	 */
-	public FileStatusModel fileStatusToModel(FileStatus status) {
+	public HDFSFileStatus fileStatusToModel(FileStatus status) {
 
-		FileStatusModel fileStatu = new FileStatusModel();
+		HDFSFileStatus fileStatu = new HDFSFileStatus();
 		fileStatu.setPath(Path.getPathWithoutSchemeAndAuthority(status.getPath()).toString());
 		fileStatu.setReplication(status.getReplication());
 		fileStatu.setDirectory(status.isDirectory());
@@ -458,6 +461,38 @@ public class HdfsApi {
 	}
 
 	/**
+	 * 按字节从客户端拉取字节读写到服务端
+	 * @param srcFile
+	 * @param destPath
+	 * @throws IOException
+	 * @throws InterruptedException
+	 */
+	public void upLoadFile(InputStream in, final String destPath) throws IOException, InterruptedException {
+
+		execute(new PrivilegedExceptionAction<Void>() {
+			public Void run() throws IOException, InterruptedException {			
+			// 目标文件Path
+				Path dPath;
+				if (StringUtils.isNotBlank(uri)) {
+					dPath = new Path(uri + "/" + destPath);
+				} else {
+					// 否者 默认上传到根目录下
+					dPath = new Path(uri + "/");
+				}
+				OutputStream os = fs.create(dPath);	     
+				/**
+				 * in ：输入字节流（从要上传的文件中读取）
+				 * out：输出字节流（字节输出到目标文件）
+				 * 2048：每次写入2048
+				 * true：不管成功与否，最后都关闭stream资源
+				 */
+				org.apache.hadoop.io.IOUtils.copyBytes(in, os, 2048, true);
+				return null;
+			}
+		});
+	}
+
+	/**
 	 * 从 HDFS文件系统上 下载文件到指定destPath路径下
 	 * 
 	 * @param srcFile
@@ -490,8 +525,42 @@ public class HdfsApi {
 				return null;
 			}
 		});
-
 	}
+	
+	
+	/**
+	 * 从 HDFS文件系统上 读取文件流写入到本地文件
+	 * 
+	 * @param srcFile
+	 * @param destPath
+	 * @throws InterruptedException
+	 * @throws IOException
+	 */
+	public void downLoadFile(final String srcFile, final String destPath,boolean flag) throws IOException, InterruptedException {
+
+		execute(new PrivilegedExceptionAction<Void>() {
+			public Void run() {
+				// 源路径
+				Path sPath;
+				if (StringUtils.isNotBlank(uri)) {
+					sPath = new Path(uri + "/" + srcFile);
+				} else {
+					sPath = new Path(srcFile);
+				}
+
+				try {
+					 InputStream is = fs.open(sPath);
+					 FileOutputStream fos = new FileOutputStream(destPath);            
+					 org.apache.hadoop.io.IOUtils.copyBytes(is, fos, 2048);
+					System.out.println("文件下载至：" + destPath);
+				} catch (IOException e) {
+					System.err.println(e);
+				}
+				return null;
+			}
+		});
+	}
+	
 
 	/**
 	 * 查找某个文件在 HDFS集群的位置【文件块的信息】
@@ -734,8 +803,8 @@ public class HdfsApi {
 					System.out.println(srcPath + " == 不存在，本次操作终止");
 					return false;
 				}
-				 boolean copy = FileUtil.copy(fs, sPath, fs, dPath, true, conf);
-				 return copy;
+				boolean copy = FileUtil.copy(fs, sPath, fs, dPath, true, conf);
+				return copy;
 			}
 		});
 
@@ -891,7 +960,7 @@ public class HdfsApi {
 
 				Trash trash = new Trash(fs, conf);
 				boolean flag = trash.moveToTrash(new Path(path));
-				return  flag;
+				return flag;
 			}
 		});
 	}

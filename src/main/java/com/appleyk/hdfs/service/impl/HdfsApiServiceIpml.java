@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 import com.appleyk.exception.HdfsApiException;
 import com.appleyk.hdfs.HdfsApi;
 import com.appleyk.hdfs.service.HdfsApiService;
-import com.appleyk.model.FileStatusModel;
+import com.appleyk.model.HDFSFileStatus;
 import com.appleyk.model.HDFSOp;
 import com.appleyk.model.ListFilter;
 import com.appleyk.model.RegexExcludePathFilter;
@@ -279,7 +279,7 @@ public class HdfsApiServiceIpml implements HdfsApiService {
 	}
 
 	@Override
-	public DPage<FileStatusModel> getFileListStatus(HdfsApi api, ListFilter filter) throws Exception {
+	public DPage<HDFSFileStatus> getFileListStatus(HdfsApi api, ListFilter filter) throws Exception {
 
 		String dirPath = filter.getDirPath();
 		if (dirPath == null) {
@@ -289,14 +289,14 @@ public class HdfsApiServiceIpml implements HdfsApiService {
 
 		int pageNum  = filter.getPageNum() ;
 		int pageSize = filter.getPageSize();
- 		List<FileStatusModel> result = api.getFileList(dirPath, getPathFilter(filter.getRegex()));
-		DPage<FileStatusModel> dPage = new DPage<>(result, pageNum, pageSize);
+ 		List<HDFSFileStatus> result = api.getFileList(dirPath, getPathFilter(filter.getRegex()));
+		DPage<HDFSFileStatus> dPage = new DPage<>(result, pageNum, pageSize);
 
 		return dPage;
 	}
 
 	@Override
-	public DPage<FileStatusModel> getHomeListStatus(HdfsApi api, ListFilter filter) throws Exception {
+	public DPage<HDFSFileStatus> getHomeListStatus(HdfsApi api, ListFilter filter) throws Exception {
 	
 		Path homeDir = api.getHomeDir();
 		String dirPath = "user/"+homeDir.getName();
@@ -307,14 +307,14 @@ public class HdfsApiServiceIpml implements HdfsApiService {
 
 		int pageNum  = filter.getPageNum() ;
 		int pageSize = filter.getPageSize();
- 		List<FileStatusModel> result = api.getFileList(dirPath, getPathFilter(filter.getRegex()));
-		DPage<FileStatusModel> dPage = new DPage<>(result, pageNum, pageSize);
+ 		List<HDFSFileStatus> result = api.getFileList(dirPath, getPathFilter(filter.getRegex()));
+		DPage<HDFSFileStatus> dPage = new DPage<>(result, pageNum, pageSize);
 
 		return dPage;	
 	}
 
 	@Override
-	public DPage<FileStatusModel> getTrashListStatus(HdfsApi api, ListFilter filter) throws Exception {
+	public DPage<HDFSFileStatus> getTrashListStatus(HdfsApi api, ListFilter filter) throws Exception {
 
 		Path trashDir = api.getTrashDir();
 		String dirPath = "user/"+api.getHomeDir().getName()+"/"+trashDir.getName().trim();
@@ -325,8 +325,8 @@ public class HdfsApiServiceIpml implements HdfsApiService {
 
 		int pageNum  = filter.getPageNum() ;
 		int pageSize = filter.getPageSize();
- 		List<FileStatusModel> result = api.getFileList(dirPath, getPathFilter(filter.getRegex()));
-		DPage<FileStatusModel> dPage = new DPage<>(result, pageNum, pageSize);
+ 		List<HDFSFileStatus> result = api.getFileList(dirPath, getPathFilter(filter.getRegex()));
+		DPage<HDFSFileStatus> dPage = new DPage<>(result, pageNum, pageSize);
 		return dPage;	
 	}
 

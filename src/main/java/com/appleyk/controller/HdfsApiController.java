@@ -1,5 +1,7 @@
 package com.appleyk.controller;
 
+import java.io.InputStream;
+
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.hadoop.conf.Configuration;
@@ -10,12 +12,14 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.appleyk.exception.HdfsApiException;
 import com.appleyk.hdfs.HdfsApi;
 import com.appleyk.hdfs.service.HdfsApiService;
-import com.appleyk.model.FileStatusModel;
+import com.appleyk.model.HDFSFileStatus;
 import com.appleyk.model.HDFSOp;
 import com.appleyk.model.ListFilter;
 import com.appleyk.model.OP;
@@ -70,12 +74,7 @@ public class HdfsApiController {
 			result = apiService.append(api, hdfsOp);
 		} else if (op.equals(OP.OPEN)) {
 			apiService.open(api, hdfsOp, response);
-		} else if (op.equals(OP.UPLOAD)) {
-			result = apiService.upLoad(api, hdfsOp);
-		} else if (op.equals(OP.DOWNLOAD)) {
-			result = apiService.downLoad(api, hdfsOp);
-		}
-
+		} 
 		api.close();
 
 		if (result) {
@@ -83,9 +82,46 @@ public class HdfsApiController {
 		} else {
 			return new ResponseResult(ResponseMessage.INTERNAL_SERVER_ERROR);
 		}
-
+					
 	}
 
+	
+	
+	/**
+	 * 上传文件
+	 * 
+	 * @param file
+	 * @return
+	 * @throws Exception
+	 */
+	@PostMapping("/upload")
+	public ResponseResult upLoadFile(@RequestParam(name = "file", required = true) MultipartFile file, 
+			@RequestParam(name = "destPath") String destPath)
+			throws Exception {
+		HdfsApi api = new HdfsApi(conf, user);
+		InputStream is = file.getInputStream();
+		String name = file.getOriginalFilename();
+		api.upLoadFile(is, destPath + "/" + name);
+		api.close();
+		return new ResponseResult(ResponseMessage.OK);
+	}
+
+	/**
+	 * 下载文件
+	 * 
+	 * @return
+	 */
+	@GetMapping("/download")
+	public ResponseResult downLoadFile(@RequestParam(name = "srcPath") String srcPath,
+			@RequestParam(name = "destPath") String destPath) throws Exception {
+		HdfsApi api = new HdfsApi(conf, user);
+		api.downLoadFile(srcPath, destPath, true);
+		api.close();
+		return new ResponseResult(ResponseMessage.OK);
+	}
+
+	
+	
 	@GetMapping
 	public ResponseResult getFileStatus(ListFilter listFilter) throws Exception {
 
@@ -95,7 +131,7 @@ public class HdfsApiController {
 			throw new HdfsApiException("无法接收文件操作标识为空的请求");
 		}
 
-		DPage<FileStatusModel> dPage = null;
+		DPage<HDFSFileStatus> dPage = null;
 
 		if (op.equals(OP.FILElIST)) {
 			dPage = apiService.getFileListStatus(api, listFilter);
@@ -108,7 +144,7 @@ public class HdfsApiController {
 		/**
 		 * 构造返回结果
 		 */
-		ResultData<FileStatusModel> resultData = new ResultData<>(ResponseMessage.OK, dPage);
+		ResultData<HDFSFileStatus> resultData = new ResultData<>(ResponseMessage.OK, dPage);
 
 		api.close();
 		return new ResponseResult(resultData);

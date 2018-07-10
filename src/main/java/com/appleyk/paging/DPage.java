@@ -3,7 +3,7 @@ package com.appleyk.paging;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.appleyk.model.FileStatusModel;
+import com.appleyk.model.HDFSFileStatus;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -128,24 +128,24 @@ public class DPage<T> {
 	public static void main(String[] args) throws Exception{
 		
 		ObjectMapper mapper = new ObjectMapper();
-		List<FileStatusModel> data = new ArrayList<>();
-		FileStatusModel model1 = new FileStatusModel();
+		List<HDFSFileStatus> data = new ArrayList<>();
+		HDFSFileStatus model1 = new HDFSFileStatus();
 		model1.setPath("A");
-		FileStatusModel model2 = new FileStatusModel();
+		HDFSFileStatus model2 = new HDFSFileStatus();
 		model2.setPath("B");
-		FileStatusModel model3 = new FileStatusModel();
+		HDFSFileStatus model3 = new HDFSFileStatus();
 		model3.setPath("C");
-		FileStatusModel model4 = new FileStatusModel();
+		HDFSFileStatus model4 = new HDFSFileStatus();
 		model4.setPath("D");
-		FileStatusModel model5 = new FileStatusModel();
+		HDFSFileStatus model5 = new HDFSFileStatus();
 		model5.setPath("E");
-		FileStatusModel model6 = new FileStatusModel();
+		HDFSFileStatus model6 = new HDFSFileStatus();
 		model6.setPath("F");
 		data.add(model1);data.add(model2);data.add(model3);data.add(model4);data.add(model5);data.add(model6);
 		int pageNum = 13;
 		int pageSize = 2; 
 		System.out.println("pageNum: "+pageNum+",pageSize : "+pageSize);
-		DPage<FileStatusModel> page = new DPage<>(data,pageNum, pageSize);
+		DPage<HDFSFileStatus> page = new DPage<>(data,pageNum, pageSize);
 		System.out.println(mapper.writeValueAsString(page));
 	} 
 }
